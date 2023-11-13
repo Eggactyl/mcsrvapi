@@ -130,7 +130,10 @@ func GetProjectVersionBuildDownload(project string, version string, build string
 		return nil, err
 	}
 
-	file.Sync()
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
 
 	sha256Hash := sha256.New()
 	sha1Hash := sha1.New()

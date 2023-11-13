@@ -26,6 +26,7 @@ const (
 	ChecksumTypeSha1   = "sha1"
 	ChecksumTypeSha256 = "sha256"
 	ChecksumTypeMd5    = "md5"
+	ChecksumTypeNone   = "none"
 )
 
 func DownloadWithChecksums(url string, path string, checksumType string, checksum string) (*DownloadChecksums, error) {
@@ -89,15 +90,23 @@ func DownloadWithChecksums(url string, path string, checksumType string, checksu
 	sha1Sum := sha1Hash.Sum(nil)
 	md5Sum := md5Hash.Sum(nil)
 
+	checksums := DownloadChecksums{
+		Sha256: hex.EncodeToString(sha256Sum),
+		Sha1:   hex.EncodeToString(sha1Sum),
+		Md5:    hex.EncodeToString(md5Sum),
+	}
+
 	var actualChecksum string
 
 	switch checksumType {
 	case "sha1":
-		actualChecksum = hex.EncodeToString(sha1Sum)
+		actualChecksum = checksums.Sha1
 	case "sha256":
-		actualChecksum = hex.EncodeToString(sha256Sum)
+		actualChecksum = checksums.Sha256
 	case "md5":
-		actualChecksum = hex.EncodeToString(md5Sum)
+		actualChecksum = checksums.Md5
+	case "none":
+		return &checksums, nil
 	default:
 		return nil, ErrInvalidChecksumType
 	}
@@ -112,12 +121,6 @@ func DownloadWithChecksums(url string, path string, checksumType string, checksu
 
 		return nil, ErrMismatchedChecksum
 
-	}
-
-	checksums := DownloadChecksums{
-		Sha256: hex.EncodeToString(sha256Sum),
-		Sha1:   hex.EncodeToString(sha1Sum),
-		Md5:    hex.EncodeToString(md5Sum),
 	}
 
 	return &checksums, nil

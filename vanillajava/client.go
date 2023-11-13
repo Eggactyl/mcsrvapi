@@ -1,13 +1,15 @@
 package vanillajava
 
 import (
-	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 
 	"github.com/eggactyl/mcsrvapi"
+	jsoniter "github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigFastest
 
 var ErrNotFound = errors.New("mc version not found")
 var ApiURL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"

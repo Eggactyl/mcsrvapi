@@ -1,15 +1,9 @@
 package paper
 
 import (
-	"crypto/md5"
-	"crypto/sha1"
-	"crypto/sha256"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/eggactyl/mcsrvapi"
 	jsoniter "github.com/json-iterator/go"
@@ -153,83 +147,11 @@ func GetProjectVersionBuildDownload(project string, version string, build int, p
 		return nil, err
 	}
 
-	res, err := http.Get(ApiURL + fmt.Sprintf("projects/%s/versions/%s/builds/%d/downloads/%s", project, version, build, buildInfo.Downloads.Application.Name))
+	checksums, err := mcsrvapi.DownloadWithChecksums(ApiURL+fmt.Sprintf("projects/%s/versions/%s/builds/%d/downloads/%s", project, version, build, buildInfo.Downloads.Application.Name), path, mcsrvapi.ChecksumTypeSha256, buildInfo.Downloads.Application.Sha256)
 	if err != nil {
 		return nil, err
 	}
 
-	defer res.Body.Close()
-
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
-	if err != nil {
-		return nil, err
-	}
-
-	defer file.Close()
-
-	_, err = io.Copy(file, res.Body)
-	if err != nil && err != io.EOF {
-		return nil, err
-	}
-
-	_, err = file.Seek(0, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	sha256Hash := sha256.New()
-	sha1Hash := sha1.New()
-	md5Hash := md5.New()
-
-	buffer := make([]byte, 4096)
-
-	for {
-
-		n, err := file.Read(buffer)
-		if err != nil && err != io.EOF {
-			return nil, err
-		}
-
-		if n == 0 {
-			break
-		}
-
-		if _, err := sha256Hash.Write(buffer[:n]); err != nil {
-			return nil, err
-		}
-
-		if _, err := sha1Hash.Write(buffer[:n]); err != nil {
-			return nil, err
-		}
-
-		if _, err := md5Hash.Write(buffer[:n]); err != nil {
-			return nil, err
-		}
-
-	}
-
-	sha256Sum := sha256Hash.Sum(nil)
-	sha1Sum := sha1Hash.Sum(nil)
-	md5Sum := md5Hash.Sum(nil)
-
-	if hex.EncodeToString(sha256Sum) != buildInfo.Downloads.Application.Sha256 {
-
-		file.Close()
-
-		if err := os.Remove(path); err != nil {
-			return nil, err
-		}
-
-		return nil, errors.New("mismatched checksums")
-
-	}
-
-	checksums := mcsrvapi.DownloadChecksums{
-		Sha256: hex.EncodeToString(sha256Sum),
-		Sha1:   hex.EncodeToString(sha1Sum),
-		Md5:    hex.EncodeToString(md5Sum),
-	}
-
-	return &checksums, nil
+	return checksums, nil
 
 }

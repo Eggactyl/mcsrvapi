@@ -35,6 +35,27 @@ func GetProjects() (*PaperProjects, error) {
 
 }
 
+func GetProject(project string) (*PaperProject, error) {
+
+	res, err := http.Get(ApiURL + fmt.Sprintf("projects/%s", project))
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	decoder := json.NewDecoder(res.Body)
+
+	paperProject := PaperProject{}
+	err = decoder.Decode(&paperProject)
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+
+	return &paperProject, nil
+
+}
+
 func GetProjectVersion(project string, version string) (*PaperProjectVersion, error) {
 
 	res, err := http.Get(ApiURL + fmt.Sprintf("projects/%s/versions/%s", project, version))

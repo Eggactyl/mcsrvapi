@@ -1,6 +1,7 @@
 package paper
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +14,8 @@ var json = jsoniter.ConfigFastest
 
 var ApiVersion = 2
 var ApiURL = fmt.Sprintf("https://api.papermc.io/v%d/", ApiVersion)
+
+var ErrNoStableVer = errors.New("no stable version found")
 
 func GetProjects() (*PaperProjects, error) {
 
@@ -53,6 +56,68 @@ func GetProject(project string) (*PaperProject, error) {
 	}
 
 	return &paperProject, nil
+
+}
+
+func (p *PaperProject) GetVersionBuilds(version string) (*PaperProjectVersionBuilds, error) {
+	return GetProjectVersionBuilds(p.ProjectID, version)
+}
+
+func (p *PaperProject) GetVersion(version string) (*PaperProjectVersion, error) {
+	return GetProjectVersion(p.ProjectID, version)
+}
+
+func (v PaperProjectVersionBuilds) LatestBuild() *PaperProjectVersionBuildBase {
+	return &v.Builds[len(v.Builds)-1]
+}
+
+func (v PaperProjectVersionBuilds) LatestStableBuild() (*PaperProjectVersionBuildBase, error) {
+
+	latestBuildNum := 0
+	latestBuildIndex := -1
+
+	for i, build := range v.Builds {
+
+		if build.Channel == "default" {
+
+			if latestBuildNum < build.Build {
+				latestBuildIndex = i
+				latestBuildNum = build.Build
+			}
+
+		}
+
+	}
+
+	if latestBuildIndex > len(v.Builds)-1 || latestBuildIndex < 0 {
+		return nil, ErrNoStableVer
+	}
+
+	return &v.Builds[latestBuildIndex], nil
+
+}
+
+func (p *PaperProject) DownloadURL(version string, stable bool) (*string, error) {
+
+	verInfo, err := p.GetVersionBuilds(version)
+	if err != nil {
+		return nil, err
+	}
+
+	var latestBuild *PaperProjectVersionBuildBase
+
+	if !stable {
+		latestBuild = verInfo.LatestBuild()
+	} else {
+		latestBuild, err = verInfo.LatestStableBuild()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	downloadURL := fmt.Sprintf(ApiURL+"projects/%s/versions/%s/builds/%d/downloads/%s", p.ProjectID, version, latestBuild.Build, latestBuild.Downloads.Application.Name)
+
+	return &downloadURL, nil
 
 }
 

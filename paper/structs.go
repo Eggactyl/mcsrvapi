@@ -32,7 +32,7 @@ type PaperProjectVersionBuilds struct {
 type PaperProjectVersionBuildBase struct {
 	Build     int                   `json:"build"`
 	Time      time.Time             `json:"time"`
-	Channel   string                `json:"string"`
+	Channel   string                `json:"channel"`
 	Promoted  bool                  `json:"promoted"`
 	Changes   []PaperProjectChanges `json:"changes"`
 	Downloads PaperProjectDownloads `json:"downloads"`

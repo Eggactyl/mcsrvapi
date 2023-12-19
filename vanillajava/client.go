@@ -14,11 +14,7 @@ var json = jsoniter.ConfigFastest
 var ErrNotFound = errors.New("mc version not found")
 var ApiURL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 
-type VanillaJava struct {
-	manifest *VanillaJavaManifest
-}
-
-func GetManifest() (*VanillaJava, error) {
+func GetManifest() (*VanillaJavaManifest, error) {
 
 	res, err := http.Get(ApiURL)
 	if err != nil {
@@ -34,9 +30,7 @@ func GetManifest() (*VanillaJava, error) {
 		return nil, err
 	}
 
-	return &VanillaJava{
-		manifest: &manifest,
-	}, nil
+	return &manifest, nil
 
 }
 

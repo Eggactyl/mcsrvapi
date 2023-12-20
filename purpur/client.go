@@ -77,6 +77,10 @@ func GetProjectVersion(project string, version string) (*PurpurProjectVersion, e
 
 }
 
+func (p *PurpurProjectVersion) GetLatestBuild() (*PurpurProjectBuild, error) {
+	return GetProjectVersionBuild(p.Project, p.Version, p.Builds.Latest)
+}
+
 func GetProjectVersionBuild(project string, version string, build string) (*PurpurProjectBuild, error) {
 
 	res, err := http.Get(ApiURL + fmt.Sprintf("%s/%s/%s", project, version, build))
@@ -96,6 +100,10 @@ func GetProjectVersionBuild(project string, version string, build string) (*Purp
 
 	return &purpurProjectVersionBuild, nil
 
+}
+
+func (p *PurpurProjectBuild) DownloadURL() string {
+	return fmt.Sprintf(ApiURL+"%s/%s/%s/download", p.Project, p.Version, p.Build)
 }
 
 func GetProjectVersionBuildDownload(project string, version string, build string, path string) (*mcsrvapi.DownloadChecksums, error) {

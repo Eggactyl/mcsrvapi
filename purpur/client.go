@@ -58,7 +58,14 @@ func GetProject(project string) (*PurpurProject, error) {
 
 func GetProjectVersion(project string, version string) (*PurpurProjectVersion, error) {
 
-	res, err := http.Get(ApiURL + fmt.Sprintf("%s/%s", project, version))
+	req, err := http.NewRequest("GET", ApiURL+fmt.Sprintf("%s/%s", project, version), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Cache-Control", "no-cache")
+
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
